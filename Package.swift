@@ -4,18 +4,30 @@
 import PackageDescription
 
 let package = Package(
-    name: "DrawingParsing",
+    name: "swift-drawing-parsing",
+    platforms: [
+        .iOS(.v17),
+        .macOS(.v14)
+    ],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
             name: "DrawingParsing",
             targets: ["DrawingParsing"]),
     ],
+    dependencies: [
+        .package(url: "https://github.com/dave256/swift-drawing", .upToNextMajor(from: "2.0.1")),
+        .package(url: "https://github.com/pointfreeco/swift-parsing.git", exact: "0.12.1")
+    ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
         .target(
-            name: "DrawingParsing"),
+            name: "DrawingParsing",
+            dependencies: [
+                .product(name: "Drawing", package: "swift-drawing"),
+                .product(name: "Parsing", package: "swift-parsing")
+            ]),
         .testTarget(
             name: "DrawingParsingTests",
             dependencies: ["DrawingParsing"]),
