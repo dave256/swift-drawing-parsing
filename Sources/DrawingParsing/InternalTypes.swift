@@ -1,6 +1,6 @@
 //
 //  InternalTypes.swift
-//  
+//
 //
 //  Created by David Reed on 2/22/24.
 //
@@ -27,6 +27,35 @@ extension DrawableShape: Drawable {
 }
 
 extension DrawableShape {
+    static func parser() -> some ParserPrinter<Substring, DrawableShape> {
+        OneOf {
+            unitSquareParser()
+            unitCircleParser()
+        }
+    }
+
+    /// zero or more DrawableShape separated by newline printing a blank line between shapes
+    static func zeroOrMoreParser() -> some ParserPrinter<Substring, [DrawableShape]> {
+        ParsePrint(input: Substring.self) {
+            Many(0...) {
+                DrawableShape.parser()
+            } separator: {
+                Whitespace(1..., .vertical).printing("\n\n".utf8)
+            }
+        }
+    }
+
+    /// zero or more DrawableShape separated by newline printing a blank line between shapes
+    static func oneOrMoreParser() -> some ParserPrinter<Substring, [DrawableShape]> {
+        ParsePrint(input: Substring.self) {
+            Many(1...) {
+                DrawableShape.parser()
+            } separator: {
+                Whitespace(1..., .vertical).printing("\n\n".utf8)
+            }
+        }
+    }
+
     static func unitSquareParser() -> some ParserPrinter<Substring, DrawableShape> {
         ParsePrint(input: Substring.self, UnitSquareConversion()) {
             UnitSquare.parser()
@@ -36,24 +65,6 @@ extension DrawableShape {
     static func unitCircleParser() -> some ParserPrinter<Substring, DrawableShape> {
         ParsePrint(input: Substring.self, UnitCircleConversion()) {
             UnitCircle.parser()
-        }
-    }
-
-    static func parser() -> some ParserPrinter<Substring, DrawableShape> {
-        OneOf {
-            unitSquareParser()
-            unitCircleParser()
-        }
-    }
-
-    /// zero or more ParseShapes with two newline characters between them
-    static func zeroOrMoreParser() -> some ParserPrinter<Substring, [DrawableShape]> {
-        ParsePrint(input: Substring.self) {
-            Many(0...) {
-                DrawableShape.parser()
-            } separator: {
-                Whitespace(1..., .vertical).printing("\n".utf8)
-            }
         }
     }
 
@@ -97,6 +108,8 @@ extension DrawableShape {
     }
 }
 
+// MARK: -
+
 internal struct DrawableShapeGroup: Drawable, Transformable, Equatable {
 
     /// init
@@ -136,35 +149,49 @@ internal struct DrawableShapeGroup: Drawable, Transformable, Equatable {
 }
 
 extension DrawableShapeGroup {
+    /// "group" followed by optional name/comment, newline
+    /// then optional transforms for the group
     static func parser() -> some ParserPrinter<Substring, DrawableShapeGroup> {
         ParsePrint(input: Substring.self, .memberwise(DrawableShapeGroup.init)) {
             Whitespace(0..., .vertical)
             "group"
             Comment.parser()
-            Transform.arrayParserStartingWithNewline()
-            Whitespace(0..., .vertical).printing("\n".utf8)
-            DrawableShape.zeroOrMoreParser()
+            ShapeTransforms.parser()
+
+            // at least one \n at end of text before
+            // shape starts but print two to leave a
+            // blank line between shapes when printing
+            Whitespace(1..., .vertical).printing("\n\n".utf8)
+            // a group must have at least one shape
+            DrawableShape.oneOrMoreParser()
         }
     }
 
     static func zeroOrMoreParser() -> some ParserPrinter<Substring, [DrawableShapeGroup]> {
         ParsePrint(input: Substring.self) {
-            OneOf {
-                ParsePrint {
-                    // first try to handle any white space before it and consume it
-                    //Whitespace(0...)
-                    // next look for one more more transforms separated by a newline
-                    Many(1...) {
-                        DrawableShapeGroup.parser()
-                    } separator: {
-                        Whitespace(1..., .vertical).printing("\n\n".utf8)
-                    }
-                    Whitespace(0...)
-                }
-                // if no transforms, this will leave the white space since we only consume it if there is at least one transform
-                // this is necessary so we don't need two blank lines when there are no transforms
-//                Whitespace(0..., .vertical).printing("".utf8).map { [DrawableShapeGroup]() }
+            // must have at least one shap
+            Many(0...) {
+                DrawableShapeGroup.parser()
+            } separator: {
+                // at least one \n at end of text before
+                // next group starts but print two to leave a
+                // blank line between shapes when printing
+                Whitespace(2..., .vertical).printing("\n\n".utf8)
             }
         }
     }
+}
+
+// MARK: -
+
+internal enum ShapeGroups {
+    /// parser for the entire input file that produes an array of ShapeGroups
+    public static func parser() -> some ParserPrinter<Substring, [DrawableShapeGroup]> {
+        ParsePrint(input: Substring.self) {
+            DrawableShapeGroup.zeroOrMoreParser()
+            // allow any trailing white space at end of input
+            Whitespace(0...)
+        }
+    }
+
 }

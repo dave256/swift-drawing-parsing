@@ -9,30 +9,6 @@ import CoreGraphics
 import Drawing
 import Parsing
 
-// MARK: - Comment
-
-/// for parsing text after a shape that is a comment for the shape
-/// if no space/tab at start then no comment
-/// an Enum so can't instantiate - just use the static parser() method
-public enum Comment {
-    public static func parser() -> some ParserPrinter<Substring, String> {
-        // rest of line can have a name/comment
-        OneOf {
-            // either a space followed by comment
-            ParsePrint {
-                Whitespace(1..., .horizontal).printing(" ".utf8)
-                PrefixUpTo("\n").map(.string)
-            }
-            // or if no horizontal white space then assume no comment
-            Not {
-                Whitespace(1..., .horizontal)
-            }.map { "" }
-        }
-    }
-}
-
-// MARK: CGPoint
-
 public extension CGPoint {
 
     /// two numbers (can be int or double) separated by one or more spaces
@@ -64,7 +40,25 @@ public extension CGPoint {
     }
 }
 
-// MARK: Transform
+// MARK: -
+
+public extension DrawStyle {
+    /// "path", "closed", or "filled" followed by one or more spaces/tabs followed by a color
+    static func parser() -> some ParserPrinter<Substring, DrawStyle> {
+        ParsePrint(input: Substring.self, .memberwise(DrawStyle.init)) {
+            // allow leading spaces and tabs
+            Whitespace(0..., .horizontal)
+            // filled, closed or path
+            Style.parser()
+            Whitespace(1..., .horizontal)
+            Color.parser()
+            // allow trailing spaces and tabs
+            Whitespace(0..., .horizontal)
+        }
+    }
+}
+
+// MARK: -
 
 public extension Transform {
 
@@ -84,65 +78,26 @@ public extension Transform {
     }
     
     /// use this one for paring transforms after shapes
-    static func arrayParserStartingWithNewline() -> some ParserPrinter<Substring, [Transform]> {
-        ParsePrint(input: Substring.self) {
-
-            OneOf {
-                ParsePrint {
-                    Many(1...) {
-                        Transform.parser()
-                    } separator: {
-                        "\n"
-                    } terminator: {
-                        // terminate when find end of input or a newline after processing all transforms first
-                        OneOf {
-                            End()
-                            // check for newline but don't consume/parse the newline
-                            Peek { Whitespace(1, .vertical) }
-                        }
-                    }
-                }
-
-                ParsePrint {
-                    Whitespace(1, .vertical)
-                    Many(1...) {
-                        Transform.parser()
-                    } separator: {
-                        "\n"
-                    } terminator: {
-                        // terminate when find end of input or a newline after processing all transforms first
-                        OneOf {
-                            End()
-                            // check for newline but don't consume/parse the newline
-                            Peek { Whitespace(1, .vertical) }
-                        }
-                    }
-                }
-
-                ParsePrint {
-                    Whitespace(1, .vertical)
-                    Not {
-                        Transform.parser()
-                    }
-                }
-                .map { [Transform]() }
-
-                // if no newline at end then assume end of input with no transforms for last shape
-                Not {
-                    Whitespace(1, .vertical)
-                }
-                .map { [Transform]() }
-            }
-        }
-    }
-
-    /// zero or more transformations separated by a newline
     static func zeroOrMoreParser() -> some ParserPrinter<Substring, [Transform]> {
         ParsePrint(input: Substring.self) {
-            Many(0...) {
-                Transform.parser()
-            } separator: {
-                Whitespace(1, .vertical)
+            OneOf {
+                // if we have one or more transforms, parse them
+                ParsePrint {
+                    // confirming there is a transform but doesn't remove it
+                    Peek { Transform.parser() }
+                    // now parse all the transforms separated by a \n
+                    Many(1...) {
+                        Transform.parser()
+                    } separator: {
+                        "\n"
+                    }
+                }
+
+                // no transforms just just skip and return empty array
+                Not {
+                    Transform.parser()
+                }
+                .map { [Transform]() }
             }
         }
     }
@@ -238,29 +193,67 @@ public extension Transform {
         }
     }
 }
+// MARK: -
 
-// MARK: DrawStyle
+public enum ShapeTransforms {
+    /// for parsing transforms at end of a shape or group
+    public static func parser() -> some ParserPrinter<Substring, [Transform]> {
+        OneOf {
+            // find \n followed by transform, parse the transforms
+            // this leaves the \n there since it could be the
+            // separator for the next shape
+            ParsePrint {
+                Whitespace(1, .vertical)
+                Peek { Transform.parser() }
+                Transform.zeroOrMoreParser()
+            }
 
-public extension DrawStyle {
-    /// "path", "closed", or "filled" followed by one or more spaces/tabs followed by a color
-    static func parser() -> some ParserPrinter<Substring, DrawStyle> {
-        ParsePrint(input: Substring.self, .memberwise(DrawStyle.init)) {
-            // allow leading spaces and tabs
-            Whitespace(0..., .horizontal)
-            Style.parser()
-            Whitespace(1..., .horizontal)
-            Color.parser()
-            // allow trailing spaces and tabs
-            Whitespace(0..., .horizontal)
+            // find \n but then not a transform so no transforms
+            // this leaves the \n there since it could be the
+            // separator for the next shape
+            ParsePrint {
+                Peek {
+                    Whitespace(1, .vertical)
+                    Not { Transform.parser() }
+                }
+            }.map { [Transform]() }
+
+            // end of input so no transforms
+            End().map { [Transform]() }
         }
     }
 }
 
-// MARK: UnitSquare
+
+// MARK: -
+
+/// for parsing a comment at end of line that starts with spaces/tab s ((leading spaces/tabs are not part of comment)
+/// if no space/tab at start then just returns ""
+/// an Enum so can't instantiate - just use the static parser() method
+public enum Comment {
+
+    /// for parsing text to end of line
+    public static func parser() -> some ParserPrinter<Substring, String> {
+        // rest of line can have a name/comment
+        OneOf {
+            // either a space followed by comment
+            ParsePrint {
+                Whitespace(1..., .horizontal).printing(" ".utf8)
+                PrefixUpTo("\n").map(.string)
+            }
+            // or if no horizontal white space then assume no comment
+            Not {
+                Whitespace(1..., .horizontal)
+            }.map { "" }
+        }
+    }
+}
+
+// MARK: -
 
 public extension UnitSquare {
 
-    /// "unit square" followed by a blank line followed by a DrawStyle (such as "filled red") followed by a blank line followed by Transforms (such as "r 45.0" or "s 2.5 3.5" or "t 1.5 2.5")
+    /// "unit square" followed by optional name/comment,  newline, a DrawStyle (such as "filled red") new line followed by Transforms (such as "r 45.0" or "s 2.5 3.5" or "t 1.5 2.5")
     static func parser() -> some ParserPrinter<Substring, UnitSquare> {
         ParsePrint(input: Substring.self, .memberwise(UnitSquare.init(name:drawStyle:transforms:))) {
             // allow leading spaces and tabs
@@ -271,15 +264,16 @@ public extension UnitSquare {
             Whitespace(1, .vertical)
             // style and color
             DrawStyle.parser()
-            Transform.arrayParserStartingWithNewline()
+            // this handles newline and optional transforms for shape
+            ShapeTransforms.parser()
         }
     }
 }
 
-// MARK: UnitCircle
+// MARK: -
 
 public extension UnitCircle {
-    /// "unit circle" followed by a blank line followed by a DrawStyle (such as "filled red") followed by a blank line followed by Transforms (such as "r 45.0" or "s 2.5 3.5" or "t 1.5 2.5")
+    /// "unit circle" followed by optional name/comment,  newline, a DrawStyle (such as "filled red") new line followed by Transforms (such as "r 45.0" or "s 2.5 3.5" or "t 1.5 2.5")
     static func parser() -> some ParserPrinter<Substring, UnitCircle> {
         ParsePrint(input: Substring.self, .memberwise(UnitCircle.init)) {
             // allow leading spaces and tabs
@@ -290,7 +284,8 @@ public extension UnitCircle {
             Whitespace(1, .vertical)
             // style and color
             DrawStyle.parser()
-            Transform.arrayParserStartingWithNewline()
+            // this handles newline and optional transforms for shape
+            ShapeTransforms.parser()
         }
     }
 }

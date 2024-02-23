@@ -68,13 +68,13 @@ final class TransformParsingTests: XCTestCase {
 
     func testParseZeroTransform() throws {
         let input: Substring = ""
-        let tfms = try Transform.arrayParserStartingWithNewline().parse(input)
+        let tfms = try Transform.zeroOrMoreParser().parse(input)
         XCTAssertEqual(tfms, [])
     }
 
     func testPrintZeroTransform() throws {
         let tfms: [Transform] = []
-        let output = try Transform.arrayParserStartingWithNewline().print(tfms)
+        let output = try Transform.zeroOrMoreParser().print(tfms)
         XCTAssertEqual(output, "")
     }
 
@@ -84,7 +84,7 @@ final class TransformParsingTests: XCTestCase {
         r 45.5
         t 4.5 5.25
         """
-        let tfms = try Transform.arrayParserStartingWithNewline().parse(input)
+        let tfms = try Transform.zeroOrMoreParser().parse(input)
         XCTAssertEqual(tfms, [.s(2.5, 3.5), .r(45.5), .t(4.5, 5.25)])
     }
 
@@ -137,7 +137,7 @@ final class DrawStyleParsingTests: XCTestCase {
 final class UnitCircleParsingTests: XCTestCase {
 
     func testParseNoTransforms() throws {
-        let input: Substring = "unit circle\npath red\n"
+        let input: Substring = "unit circle\npath red"
         let c = try UnitCircle.parser().parse(input)
         XCTAssertEqual(c, UnitCircle(drawStyle: DrawStyle(style: .path, color: .red), transforms: []))
     }
@@ -166,7 +166,7 @@ final class UnitCircleParsingTests: XCTestCase {
 final class UnitSquareParsingTests: XCTestCase {
 
     func testParseNoTransforms() throws {
-        let input: Substring = "unit square\npath red\n"
+        let input: Substring = "unit square\npath red"
         let c = try UnitSquare.parser().parse(input)
         XCTAssertEqual(c, UnitSquare(drawStyle: DrawStyle(style: .path, color: .red), transforms: []))
     }
