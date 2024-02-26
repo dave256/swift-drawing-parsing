@@ -174,7 +174,7 @@ closed green
         XCTAssertEqual(input, output, "parsing passed, printing failed")
     }
 
-    func testShapeGroupsParsingWithoutBlanLines() throws {
+    func testShapeGroupsParsingWithoutBlankLines() throws {
         let input: Substring = """
 group abc
 unit square name for the square
