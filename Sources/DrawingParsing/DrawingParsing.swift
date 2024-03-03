@@ -245,6 +245,12 @@ public enum Comment {
             Not {
                 Whitespace(1..., .horizontal)
             }.map { "" }
+
+            // or whitespace but no newline, parse to end
+            ParsePrint {
+                Whitespace(1..., .horizontal).printing(" ".utf8)
+                Rest().map(.string)
+            }
         }
     }
 }
