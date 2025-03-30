@@ -1,10 +1,3 @@
-//
-//  DrawomgParsing.swift
-//
-//
-//  Created by David M Reed on 02/22/24.
-//
-
 import CoreGraphics
 import Drawing
 import Parsing
@@ -76,7 +69,7 @@ public extension Transform {
             Whitespace(0..., .horizontal)
         }
     }
-    
+
     /// use this one for paring transforms after shapes
     static func zeroOrMoreParser() -> some ParserPrinter<Substring, [Transform]> {
         ParsePrint(input: Substring.self) {
