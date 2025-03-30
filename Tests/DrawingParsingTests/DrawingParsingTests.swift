@@ -1,194 +1,257 @@
-import XCTest
+import Testing
+
+import Foundation
+import InlineSnapshotTesting
 
 @testable import Drawing
 @testable import DrawingParsing
 
-final class CGPointParsingTests: XCTestCase {
-    func testParsePoint() throws {
+@Suite(.snapshots(record: .failed))
+struct CGPointParsingTests {
+    @Test func parsePoint() throws {
         let input: Substring = "2.75 3.5"
         let p = try CGPoint.parser().parse(input)
-        XCTAssertEqual(p, CGPoint(x: 2.75, y: 3.5))
+        #expect(p == CGPoint(x: 2.75, y: 3.5))
     }
 
-    func testPrintPoint() throws {
+    @Test func printPoint() throws {
         let p = CGPoint(x: 2, y: 3)
-        let output = try CGPoint.parser().print(p)
-        XCTAssertEqual(output, "2.0 3.0")
+        let output = String(try CGPoint.parser().print(p))
+        //#expect(output == "2.0 3.0")
+        assertInlineSnapshot(of: output, as: .lines) {
+            """
+            2.0 3.0
+            """
+        }
     }
 
-    func testParseArrayPoints() throws {
+    @Test func parseArrayPoints() throws {
         let input: Substring = "2 3\n4 5"
         let pts = try CGPoint.oneOrMoreParser().parse(input)
-        XCTAssertEqual(pts, [CGPoint(x: 2, y: 3), CGPoint(x: 4, y: 5)])
+        #expect(pts == [CGPoint(x: 2, y: 3), CGPoint(x: 4, y: 5)])
     }
 
-    func testPrintArrayPoints() throws {
+    @Test func printArrayPoints() throws {
         let pts =  [CGPoint(x: 2, y: 3), CGPoint(x: 4, y: 5), CGPoint(x: 10.5, y: 11.5)]
-        let output = try CGPoint.oneOrMoreParser().print(pts)
-        XCTAssertEqual(output, "2.0 3.0\n4.0 5.0\n10.5 11.5")
+        let output = String(try CGPoint.oneOrMoreParser().print(pts))
+        assertInlineSnapshot(of: output, as: .lines) {
+            """
+            2.0 3.0
+            4.0 5.0
+            10.5 11.5
+            """
+        }
     }
 }
 
-final class TransformParsingTests: XCTestCase {
-    func testParseRotate() throws {
+@Suite struct TransformParsingTests {
+    @Test func parseRotate() throws {
         let input: Substring = "r 45"
         let t = try Transform.parser().parse(input)
-        XCTAssertEqual(t, Transform.r(45))
+        #expect(t == Transform.r(45))
     }
 
-    func testPrintRotate() throws {
+    @Test func printRotate() throws {
         let t = Transform.r(45)
-        let output = try Transform.parser().print(t)
-        XCTAssertEqual(output, "r 45.0")
+        let output = String(try Transform.parser().print(t))
+        assertInlineSnapshot(of: output, as: .lines) {
+            """
+            r 45.0
+            """
+        }
     }
 
-    func testParseScale() throws {
+    @Test func parseScale() throws {
         let input: Substring = "s 2.5 3.5"
         let t = try Transform.parser().parse(input)
-        XCTAssertEqual(t, Transform.s(2.5, 3.5))
+        #expect(t == Transform.s(2.5, 3.5))
     }
 
-    func testPrintScale() throws {
+    @Test func printScale() throws {
         let t = Transform.s(3.5, 2.5)
-        let output = try Transform.parser().print(t)
-        XCTAssertEqual(output, "s 3.5 2.5")
+        let output = String(try Transform.parser().print(t))
+        assertInlineSnapshot(of: output, as: .lines) {
+            """
+            s 3.5 2.5
+            """
+        }
     }
 
-    func testParseTranslate() throws {
+    @Test func parseTranslate() throws {
         let input: Substring = "t 2.5 3.5"
         let t = try Transform.parser().parse(input)
-        XCTAssertEqual(t, Transform.t(2.5, 3.5))
+        #expect(t == Transform.t(2.5, 3.5))
     }
 
-    func testPrintTranslate() throws {
+    @Test func printTranslate() throws {
         let t = Transform.t(3.5, 2.5)
-        let output = try Transform.parser().print(t)
-        XCTAssertEqual(output, "t 3.5 2.5")
+        let output = String(try Transform.parser().print(t))
+        assertInlineSnapshot(of: output, as: .lines) {
+            """
+            t 3.5 2.5
+            """
+        }
     }
 
-    func testParseZeroTransform() throws {
+    @Test func parseZeroTransform() throws {
         let input: Substring = ""
         let tfms = try Transform.zeroOrMoreParser().parse(input)
-        XCTAssertEqual(tfms, [])
+        #expect(tfms == [])
     }
 
-    func testPrintZeroTransform() throws {
+    @Test func printZeroTransform() throws {
         let tfms: [Transform] = []
-        let output = try Transform.zeroOrMoreParser().print(tfms)
-        XCTAssertEqual(output, "")
+        let output = String(try Transform.zeroOrMoreParser().print(tfms))
+        #expect(output == "")
+        assertInlineSnapshot(of: output, as: .lines) {
+            """
+
+            """
+        }
+
     }
 
-    func testParseThreeTransforms() throws {
+    @Test func parseThreeTransforms() throws {
         let input: Substring = """
         s 2.5 3.5
         r 45.5
         t 4.5 5.25
         """
         let tfms = try Transform.zeroOrMoreParser().parse(input)
-        XCTAssertEqual(tfms, [.s(2.5, 3.5), .r(45.5), .t(4.5, 5.25)])
+        #expect(tfms == [.s(2.5, 3.5), .r(45.5), .t(4.5, 5.25)])
     }
 
-    func testPrintThreeTransforms() throws {
-        let expected: Substring = """
-        s 2.5 3.5
-        r 45.5
-        t 4.5 5.25
-        """
+    @Test func printThreeTransforms() throws {
         let tfms: [Transform] = [.s(2.5, 3.5), .r(45.5), .t(4.5, 5.25)]
-        let output = try Transform.zeroOrMoreParser().print(tfms)
-        XCTAssertEqual(output, expected)
+        let output = String(try Transform.zeroOrMoreParser().print(tfms))
+        assertInlineSnapshot(of: output, as: .lines) {
+            """
+            s 2.5 3.5
+            r 45.5
+            t 4.5 5.25
+            """
+        }
     }
 }
 
-final class DrawStyleParsingTests: XCTestCase {
+@Suite struct DrawStyleParsingTests {
 
-    func testParseDrawableStyle() throws {
+    @Test func parseDrawableStyle() throws {
         var input: Substring = "path red"
         var ds = try DrawStyle.parser().parse(input)
-        XCTAssertEqual(ds, DrawStyle(style: .path, color: .red))
+        #expect(ds == DrawStyle(style: .path, color: .red))
 
         input = "closed blue"
         ds = try DrawStyle.parser().parse(input)
-        XCTAssertEqual(ds, DrawStyle(style: .closed, color: .blue))
+        #expect(ds == DrawStyle(style: .closed, color: .blue))
 
         input = "filled green"
         ds = try DrawStyle.parser().parse(input)
-        XCTAssertEqual(ds, DrawStyle(style: .filled, color: .green))
+        #expect(ds == DrawStyle(style: .filled, color: .green))
     }
 
-    func testPrintDrawableStyle() throws {
-        var expected: Substring = "path red"
+    @Test func printDrawableStyle() throws {
         var ds = DrawStyle(style: .path, color: .red)
-        var output = try DrawStyle.parser().print(ds)
-        XCTAssertEqual(expected, output)
+        var output = String(try DrawStyle.parser().print(ds))
+        assertInlineSnapshot(of: output, as: .lines) {
+            """
+            path red
+            """
+        }
 
-        expected = "closed blue"
         ds = DrawStyle(style: .closed, color: .blue)
-        output = try DrawStyle.parser().print(ds)
-        XCTAssertEqual(expected, output)
+        output = String(try DrawStyle.parser().print(ds))
+        assertInlineSnapshot(of: output, as: .lines) {
+            """
+            closed blue
+            """
+        }
 
-        expected = "filled green"
         ds = DrawStyle(style: .filled, color: .green)
-        output = try DrawStyle.parser().print(ds)
-        XCTAssertEqual(expected, output)
+        output = String(try DrawStyle.parser().print(ds))
+        assertInlineSnapshot(of: output, as: .lines) {
+            """
+            filled green
+            """
+        }
     }
 }
 
-final class UnitCircleParsingTests: XCTestCase {
+@Suite struct UnitCircleParsingTests {
 
-    func testParseNoTransforms() throws {
+    @Test func parseNoTransforms() throws {
         let input: Substring = "unit circle\npath red"
         let c = try UnitCircle.parser().parse(input)
-        XCTAssertEqual(c, UnitCircle(drawStyle: DrawStyle(style: .path, color: .red), transforms: []))
+        #expect(c == UnitCircle(drawStyle: DrawStyle(style: .path, color: .red), transforms: []))
     }
 
-    func testParseTransforms() throws {
+    @Test func parseTransforms() throws {
         let input: Substring = "unit circle\nfilled blue\nr 45.0\ns 2.0 3.0"
         let c = try UnitCircle.parser().parse(input)
-        XCTAssertEqual(c, UnitCircle(drawStyle: DrawStyle(style: .filled, color: .blue), transforms: [.r(45), .s(2, 3)]))
+        #expect(c == UnitCircle(drawStyle: DrawStyle(style: .filled, color: .blue), transforms: [.r(45), .s(2, 3)]))
     }
 
-    func testPrintNoTransforms() throws {
-        let expected: Substring = "unit circle\npath red"
+    @Test func printNoTransforms() throws {
         let c = UnitCircle(drawStyle: DrawStyle(style: .path, color: .red), transforms: [])
-        let output = try UnitCircle.parser().print(c)
-        XCTAssertEqual(expected, output)
+        let output = String(try UnitCircle.parser().print(c))
+        assertInlineSnapshot(of: output, as: .lines) {
+            """
+            unit circle
+            path red
+            """
+        }
     }
 
-    func testPrintTransforms() throws {
-        let expected: Substring = "unit circle\nfilled blue\nr 45.0\ns 2.0 3.0"
+    @Test func printTransforms() throws {
         let c = UnitCircle(drawStyle: DrawStyle(style: .filled, color: .blue), transforms: [.r(45), .s(2, 3)])
-        let output = try UnitCircle.parser().print(c)
-        XCTAssertEqual(expected, output)
+        let output = String(try UnitCircle.parser().print(c))
+        assertInlineSnapshot(of: output, as: .lines) {
+            """
+            unit circle
+            filled blue
+            r 45.0
+            s 2.0 3.0
+            """
+        }
     }
 }
 
-final class UnitSquareParsingTests: XCTestCase {
+@Suite struct UnitSquareParsingTests {
 
-    func testParseNoTransforms() throws {
+    @Test func parseNoTransforms() throws {
         let input: Substring = "unit square\npath red"
         let c = try UnitSquare.parser().parse(input)
-        XCTAssertEqual(c, UnitSquare(drawStyle: DrawStyle(style: .path, color: .red), transforms: []))
+        #expect(c == UnitSquare(drawStyle: DrawStyle(style: .path, color: .red), transforms: []))
     }
 
-    func testParseTransforms() throws {
+    @Test func parseTransforms() throws {
         let input: Substring = "unit square\nfilled blue\nr 45.0\ns 2.0 3.0"
         let c = try UnitSquare.parser().parse(input)
-        XCTAssertEqual(c, UnitSquare(drawStyle: DrawStyle(style: .filled, color: .blue), transforms: [.r(45), .s(2, 3)]))
+        #expect(c == UnitSquare(drawStyle: DrawStyle(style: .filled, color: .blue), transforms: [.r(45), .s(2, 3)]))
     }
 
-    func testPrintNoTransforms() throws {
-        let expected: Substring = "unit square\npath red"
+    @Test func printNoTransforms() throws {
         let c = UnitSquare(drawStyle: DrawStyle(style: .path, color: .red), transforms: [])
-        let output = try UnitSquare.parser().print(c)
-        XCTAssertEqual(expected, output)
+        let output = String(try UnitSquare.parser().print(c))
+        assertInlineSnapshot(of: output, as: .lines) {
+            """
+            unit square
+            path red
+            """
+        }
     }
 
-    func testPrintTransforms() throws {
-        let expected: Substring = "unit square\nfilled blue\nr 45.0\ns 2.0 3.0"
+    @Test func printTransforms() throws {
         let c = UnitSquare(drawStyle: DrawStyle(style: .filled, color: .blue), transforms: [.r(45), .s(2, 3)])
-        let output = try UnitSquare.parser().print(c)
-        XCTAssertEqual(expected, output)
+        let output = String(try UnitSquare.parser().print(c))
+        assertInlineSnapshot(of: output, as: .lines) {
+            """
+            unit square
+            filled blue
+            r 45.0
+            s 2.0 3.0
+            """
+        }
     }
 }
 

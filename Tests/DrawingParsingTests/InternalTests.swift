@@ -1,22 +1,38 @@
-import XCTest
+//
+//  InternalTests.swift
+//  DrawingParsing
+//
+//  Created by David Reed on 3/30/25.
+//
+
+
+import InlineSnapshotTesting
+import Testing
+
 @testable import Drawing
 @testable import DrawingParsing
 
-final class InternalTests: XCTestCase {
+@Suite struct InternalTests {
 
-    func testOneSquareNoTransforms() throws {
+    @Test func oneSquareNoTransforms() throws {
         let input: Substring = """
 unit square
 filled red
 """
         let shapes = try DrawableShape.zeroOrMoreParser().parse(input)
         let expected = [DrawableShape.unitSquare(.init(drawStyle: .init(style: .filled, color: .red), transforms: []))]
-        XCTAssertEqual(shapes, expected)
-        let output: Substring = try DrawableShape.zeroOrMoreParser().print(shapes)
-        XCTAssertEqual(output, input)
+        #expect(shapes == expected)
+        let output = String(try DrawableShape.zeroOrMoreParser().print(shapes))
+        assertInlineSnapshot(of: output, as: .lines) {
+            """
+            unit square
+            filled red
+            """
+        }
+        #expect(input == output)
     }
 
-    func testOneSquareOneTransform() throws {
+    @Test func oneSquareOneTransform() throws {
         let input: Substring = """
 unit square
 filled red
@@ -24,12 +40,19 @@ s 8.0 9.0
 """
         let shapes = try DrawableShape.zeroOrMoreParser().parse(input)
         let expected = [DrawableShape.unitSquare(.init(drawStyle: .init(style: .filled, color: .red), transforms: [.s(8, 9)]))]
-        XCTAssertEqual(shapes, expected)
-        let output: Substring = try DrawableShape.zeroOrMoreParser().print(shapes)
-        XCTAssertEqual(output, input)
+        #expect(shapes == expected)
+        let output = String(try DrawableShape.zeroOrMoreParser().print(shapes))
+        assertInlineSnapshot(of: output, as: .lines) {
+            """
+            unit square
+            filled red
+            s 8.0 9.0
+            """
+        }
+        #expect(input == output)
     }
 
-    func testOneSquareMultipleTransforms() throws {
+    @Test func oneSquareMultipleTransforms() throws {
         let input: Substring = """
 unit square
 filled red
@@ -38,12 +61,20 @@ r 45.0
 """
         let shapes = try DrawableShape.zeroOrMoreParser().parse(input)
         let expected = [DrawableShape.unitSquare(.init(drawStyle: .init(style: .filled, color: .red), transforms: [.s(8, 9), .r(45)]))]
-        XCTAssertEqual(shapes, expected)
-        let output: Substring = try DrawableShape.zeroOrMoreParser().print(shapes)
-        XCTAssertEqual(output, input)
+        #expect(shapes == expected)
+        let output = String(try DrawableShape.zeroOrMoreParser().print(shapes))
+        assertInlineSnapshot(of: output, as: .lines) {
+            """
+            unit square
+            filled red
+            s 8.0 9.0
+            r 45.0
+            """
+        }
+        #expect(input == output)
     }
 
-    func testOneSquareWithName() throws {
+    @Test func oneSquareWithName() throws {
         let input: Substring = """
 unit square with a name
 filled red
@@ -51,10 +82,10 @@ s 8.0 9.0
 """
         let shapes = try DrawableShape.zeroOrMoreParser().parse(input)
         let expected = [DrawableShape.unitSquare(.init(name: "with a name", drawStyle: .init(style: .filled, color: .red), transforms: [.s(8, 9)]))]
-        XCTAssertEqual(shapes, expected)
+        #expect(shapes == expected)
     }
 
-    func testOneSquareWithNamePrint() throws {
+    @Test func oneSquareWithNamePrint() throws {
         let input: Substring = """
 unit square with a name
 filled red
@@ -62,12 +93,19 @@ s 8.0 9.0
 """
         let shapes = try DrawableShape.zeroOrMoreParser().parse(input)
         let expected = [DrawableShape.unitSquare(.init(name: "with a name", drawStyle: .init(style: .filled, color: .red), transforms: [.s(8, 9)]))]
-        XCTAssertEqual(shapes, expected)
-        let output = try DrawableShape.zeroOrMoreParser().print(shapes)
-        XCTAssertEqual(input, output)
+        #expect(shapes == expected)
+        let output = String(try DrawableShape.zeroOrMoreParser().print(shapes))
+        assertInlineSnapshot(of: output, as: .lines) {
+            """
+            unit square with a name
+            filled red
+            s 8.0 9.0
+            """
+        }
+        #expect(input == output)
     }
 
-    func testOneCircle() throws {
+    @Test func oneCircle() throws {
         let input: Substring = """
 unit circle
 filled red
@@ -75,10 +113,10 @@ s 8.0 9.0
 """
         let shapes = try DrawableShape.zeroOrMoreParser().parse(input)
         let expected = [DrawableShape.unitCircle(.init(drawStyle: .init(style: .filled, color: .red), transforms: [.s(8, 9)]))]
-        XCTAssertEqual(shapes, expected)
+        #expect(shapes == expected)
     }
 
-    func testOneCircleWithName() throws {
+    @Test func oneCircleWithName() throws {
         let input: Substring = """
 unit circle circle 1
 filled red
@@ -86,10 +124,10 @@ s 8.0 9.0
 """
         let shapes = try DrawableShape.zeroOrMoreParser().parse(input)
         let expected = [DrawableShape.unitCircle(.init(name: "circle 1", drawStyle: .init(style: .filled, color: .red), transforms: [.s(8, 9)]))]
-        XCTAssertEqual(shapes, expected)
+        #expect(shapes == expected)
     }
 
-    func testOneCircleWithNamePrint() throws {
+    @Test func oneCircleWithNamePrint() throws {
         let input: Substring = """
 unit circle circle 1
 filled red
@@ -97,19 +135,26 @@ s 8.0 9.0
 """
         let shapes = try DrawableShape.zeroOrMoreParser().parse(input)
         let expected = [DrawableShape.unitCircle(.init(name: "circle 1", drawStyle: .init(style: .filled, color: .red), transforms: [.s(8, 9)]))]
-        XCTAssertEqual(shapes, expected)
-        let output = try DrawableShape.zeroOrMoreParser().print(shapes)
-        XCTAssertEqual(input, output)
+        #expect(shapes == expected)
+        let output = String(try DrawableShape.zeroOrMoreParser().print(shapes))
+        assertInlineSnapshot(of: output, as: .lines) {
+            """
+            unit circle circle 1
+            filled red
+            s 8.0 9.0
+            """
+        }
+        #expect(input == output)
     }
 
-    func testMultipleShapesNoTransforms() throws {
+    @Test func multipleShapesNoTransforms() throws {
 
         let s = [
             DrawableShape.unitSquare(UnitSquare(drawStyle: .init(style: .filled, color: .red), transforms: [])),
             DrawableShape.unitCircle(UnitCircle(drawStyle: .init(style: .closed, color: .green), transforms: [])),
             DrawableShape.unitSquare(UnitSquare(drawStyle: .init(style: .closed, color: .green), transforms: [])),
         ]
-        let output = try DrawableShape.zeroOrMoreParser().print(s)
+        let output = String(try DrawableShape.zeroOrMoreParser().print(s))
         let input: Substring = """
 unit square
 filled red
@@ -121,11 +166,23 @@ unit square
 closed green
 """
         let shapes = try DrawableShape.zeroOrMoreParser().parse(input)
-        XCTAssertEqual(shapes, s)
-        XCTAssertEqual(input, output)
+        #expect(shapes == s)
+        assertInlineSnapshot(of: output, as: .lines) {
+            """
+            unit square
+            filled red
+
+            unit circle
+            closed green
+
+            unit square
+            closed green
+            """
+        }
+        #expect(input == output)
     }
 
-    func testMultipleShapes() throws {
+    @Test func multipleShapes() throws {
 
         let s = [
             DrawableShape.unitSquare(UnitSquare(drawStyle: .init(style: .filled, color: .red), transforms: [])),
@@ -146,19 +203,34 @@ closed green
 r 45.0
 """
         let shapes = try DrawableShape.zeroOrMoreParser().parse(input)
-        XCTAssertEqual(shapes, s)
-        let output = try DrawableShape.zeroOrMoreParser().print(shapes)
-        XCTAssertEqual(output, input, "parsing passed, printing failed")
+        #expect(shapes == s)
+        let output = String(try DrawableShape.zeroOrMoreParser().print(shapes))
+        assertInlineSnapshot(of: output, as: .lines) {
+            """
+            unit square
+            filled red
+
+            unit square
+            closed green
+            s 8.0 9.0
+            r 45.0
+
+            unit square
+            closed green
+            r 45.0
+            """
+        }
+        #expect(output == input, "parsing passed, printing failed")
     }
 
-    func testMultipleShapesWithNamesNoTransforms() throws {
+    @Test func multipleShapesWithNamesNoTransforms() throws {
 
         let s = [
             DrawableShape.unitSquare(UnitSquare(name: "square 1", drawStyle: .init(style: .filled, color: .red), transforms: [])),
             DrawableShape.unitCircle(UnitCircle(name: "circle 1", drawStyle: .init(style: .closed, color: .green), transforms: [])),
             DrawableShape.unitSquare(UnitSquare(name: "square 2", drawStyle: .init(style: .closed, color: .green), transforms: [])),
         ]
-        let output = try DrawableShape.zeroOrMoreParser().print(s)
+        let output = String(try DrawableShape.zeroOrMoreParser().print(s))
         let input: Substring = """
 unit square square 1
 filled red
@@ -170,11 +242,23 @@ unit square square 2
 closed green
 """
         let shapes = try DrawableShape.zeroOrMoreParser().parse(input)
-        XCTAssertEqual(shapes, s)
-        XCTAssertEqual(input, output, "parsing passed, printing failed")
+        #expect(shapes == s)
+        assertInlineSnapshot(of: output, as: .lines) {
+            """
+            unit square square 1
+            filled red
+
+            unit circle circle 1
+            closed green
+
+            unit square square 2
+            closed green
+            """
+        }
+        #expect(input == output, "parsing passed, printing failed")
     }
 
-    func testShapeGroupsParsingWithoutBlankLines() throws {
+    @Test func shapeGroupsParsingWithoutBlankLines() throws {
         let input: Substring = """
 group abc
 unit square name for the square
@@ -277,12 +361,41 @@ t 6.0 7.0
                         ),
                 ]),
         ]
-        XCTAssertEqual(expected, g)
-        let output = try ShapeGroups.parser().print(g)
-        XCTAssertEqual(output, expectedOutput)
+        #expect(expected == g)
+        let output = String(try ShapeGroups.parser().print(g))
+        assertInlineSnapshot(of: output, as: .lines) {
+            """
+            group abc
+
+            unit square name for the square
+            filled red
+            s 1.0 1.0
+
+            unit circle name
+            filled green
+            t 1.0 3.0
+
+            group
+            r 45.0
+
+            unit circle
+            filled red
+            s 1.5 2.0
+            t 2.0 3.0
+
+            unit circle
+            filled green
+
+            unit square name
+            filled red
+            s 3.0 5.0
+            t 6.0 7.0
+            """
+        }
+        #expect(output == expectedOutput)
     }
 
-    func testShapeGroupsWithPrint() throws {
+    @Test func shapeGroupsWithPrint() throws {
         let input: Substring = """
 group abc
 
@@ -314,21 +427,46 @@ unit circle
 filled black
 """
         let g = try ShapeGroups.parser().parse(input)
-        let output = try ShapeGroups.parser().print(g)
-        XCTAssertEqual(output, input)
+        let output = String(try ShapeGroups.parser().print(g))
+        assertInlineSnapshot(of: output, as: .lines) {
+            """
+            group abc
+
+            unit square name for the square
+            filled red
+            s 1.0 1.0
+
+            unit circle name
+            filled green
+            t 1.0 3.0
+
+            group def
+            r 45.0
+
+            unit circle
+            filled red
+            s 1.0 1.0
+            t 2.0 3.0
+
+            unit circle
+            filled green
+
+            unit square name
+            filled red
+            s 3.0 5.0
+            t 6.0 7.0
+
+            unit circle
+            filled black
+            """
+        }
+        #expect(output == input)
     }
 
-    func testMinimalShapeGroup() throws {
+    @Test func minimalShapeGroup() throws {
         let input: Substring = """
 group abc
 r 45.0
-unit circle
-filled red
-"""
-        let expectedOutput: Substring = """
-group abc
-r 45.0
-
 unit circle
 filled red
 """
@@ -342,8 +480,16 @@ filled red
                 ]
             )
         ]
-        XCTAssertEqual(expected, g)
-        let output = try ShapeGroups.parser().print(g)
-        XCTAssertEqual(output, expectedOutput)
+        #expect(expected == g)
+        let output = String(try ShapeGroups.parser().print(g))
+        assertInlineSnapshot(of: output, as: .lines) {
+            """
+            group abc
+            r 45.0
+
+            unit circle
+            filled red
+            """
+        }
     }
 }
