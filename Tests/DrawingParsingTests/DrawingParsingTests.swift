@@ -6,7 +6,7 @@ import InlineSnapshotTesting
 @testable import Drawing
 @testable import DrawingParsing
 
-@Suite(.snapshots(record: .failed))
+@Suite(.snapshots(record: .failed, diffTool: .ksdiff))
 struct CGPointParsingTests {
     @Test func parsePoint() throws {
         let input: Substring = "2.75 3.5"
@@ -134,7 +134,8 @@ struct CGPointParsingTests {
     }
 }
 
-@Suite struct DrawStyleParsingTests {
+@Suite(.snapshots(record: .failed, diffTool: .ksdiff))
+struct DrawStyleParsingTests {
 
     @Test func parseDrawableStyle() throws {
         var input: Substring = "path red"
@@ -177,7 +178,8 @@ struct CGPointParsingTests {
     }
 }
 
-@Suite struct UnitCircleParsingTests {
+@Suite(.snapshots(record: .failed, diffTool: .ksdiff))
+struct UnitCircleParsingTests {
 
     @Test func parseNoTransforms() throws {
         let input: Substring = "unit circle\npath red"
@@ -216,7 +218,8 @@ struct CGPointParsingTests {
     }
 }
 
-@Suite struct UnitSquareParsingTests {
+@Suite(.snapshots(record: .failed, diffTool: .ksdiff))
+struct UnitSquareParsingTests {
 
     @Test func parseNoTransforms() throws {
         let input: Substring = "unit square\npath red"

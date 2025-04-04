@@ -12,7 +12,8 @@ import Testing
 @testable import Drawing
 @testable import DrawingParsing
 
-@Suite struct InternalTests {
+@Suite(.snapshots(record: .failed, diffTool: .ksdiff))
+struct InternalTests {
 
     @Test func oneSquareNoTransforms() throws {
         let input: Substring = """
